@@ -4,6 +4,8 @@ import numpy as np
 import argparse
 import cv2
 import matplotlib.pyplot as plt
+from math import e
+from math import pi
 
 def threshold_pixel(r, g, b):
     h, l, s = colorsys.rgb_to_hls(r / 255., g / 255., b / 255.)
@@ -42,10 +44,16 @@ def main():
         help="path to the input image")
     args = vars(ap.parse_args())
     # construct the Gaussian blur
+    # gauss = np.array((
+    #     [1/9, 1/9, 1/9],
+    #     [1/9, 1/9, 1/9],
+    #     [1/9, 1/9, 1/9]
+    # ))
+    c = pi / 3
     gauss = np.array((
-        [1/9, 1/9, 1/9],
-        [1/9, 1/9, 1/9],
-        [1/9, 1/9, 1/9]
+        [c * (e ** -4), c * (e ** -2), c * (e ** -4)],
+        [c * (e ** -2),       c,       c * (e ** -2)],
+        [c * (e ** -4), c * (e ** -2), c * (e ** -4)]
     ))
 
     # load the input image and convert it to grayscale
