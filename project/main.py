@@ -23,8 +23,7 @@ def detectFaces(grayImage, frontalFaceCascade, profileFaceCascade):
     frontalFaces = frontalFaceCascade.detectMultiScale(
         grayImage,          # Gray scale image.
         scaleFactor=1.1,    # Help detect faces from different distances.
-        # Objects detected near the current one before it declares a that a face was found.
-        minNeighbors=5,
+        minNeighbors=5,     # Objects detected near the current object.
         minSize=(30, 30),   # Size for each window.
         flags=cv2.CASCADE_SCALE_IMAGE  # cv2.CASCADE_SCALE_IMAGE.CV_HAAR_SCALE_IMAGE
     )
@@ -32,8 +31,7 @@ def detectFaces(grayImage, frontalFaceCascade, profileFaceCascade):
     profileFaces = profileFaceCascade.detectMultiScale(
         grayImage,          # Gray scale image.
         scaleFactor=1.1,    # Help detect faces from different distances.
-        # Objects detected near the current one before it declares a that a face was found.
-        minNeighbors=3,
+        minNeighbors=3,     # Objects detected near the current object.
         minSize=(30, 30),   # Size for each window.
         flags=cv2.CASCADE_SCALE_IMAGE  # cv2.CASCADE_SCALE_IMAGE.CV_HAAR_SCALE_IMAGE
     )
@@ -107,6 +105,23 @@ def blurPixelate(faces, image, mask):
     return (image, mask)
 
 
+def applyBorders(faces, image):
+    """
+    Apply borders to regions of interest.
+
+    Parameters:
+    faces (numpy.ndarray):
+        A bidimensional array containing regions of interest (x, y, w, h).
+    image (numpy.ndarray):
+        A bidimensional array containing image's pixel data.
+    """
+
+    for (x, y, w, h) in faces:
+        y -= 25
+        h += 50
+        cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+
 def runProgram(image, frontalFaceCascade, profileFaceCascade, argv):
     """
     Function responsible of running the main process.
@@ -121,9 +136,11 @@ def runProgram(image, frontalFaceCascade, profileFaceCascade, argv):
     argv (argparse):
         Command line arguments.
     """
+    # Preprocess image by applying a Gaussian Blur.
+    blurredImage = cv2.GaussianBlur(image, (7, 7), 0)
 
     # Convert image to gray scale.
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(blurredImage, cv2.COLOR_BGR2GRAY)
 
     # Detect faces using Haar algorithm.
     faces = detectFaces(gray, frontalFaceCascade, profileFaceCascade)
@@ -137,6 +154,8 @@ def runProgram(image, frontalFaceCascade, profileFaceCascade, argv):
     try:
         if (argv.gaussian):
             tempImg, mask = blurGaussian(faces, tempImg, mask)
+        elif (argv.border):
+            applyBorders(faces, image)
         else:
             tempImg, mask = blurPixelate(faces, tempImg, mask)
     except:
@@ -163,6 +182,8 @@ def main():
         "-g", "--gaussian", help="apply gaussian blur to detected faces", action="store_true")
     parser.add_argument(
         "-p", "--pixelate", help="apply pixelate filter to detected faces", action="store_true")
+    parser.add_argument(
+        "-b", "--border", help="apply a rectangular border over faces", action="store_true")
 
     argv = parser.parse_args()
 
